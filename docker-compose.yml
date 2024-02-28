@@ -1,0 +1,48 @@
+version: '3'
+services:
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        # platform: linux/amd64
+        container_name: app
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
+        ports:
+            - 80:80
+        networks:
+            - my-recipe-net
+        volumes:
+            - './src:/var/www/html'
+        depends_on:
+            - mysql
+    mysql:
+        image: 'mysql/mysql-server:8.0'
+        container_name: mysql
+        ports:
+            - '3306:3306'
+        environment:
+            MYSQL_ROOT_PASSWORD: rootpassword
+            MYSQL_ROOT_HOST: '%'
+            MYSQL_DATABASE: recipe_database
+            MYSQL_USER: recipe_db_user
+            MYSQL_PASSWORD: password1234
+            MYSQL_ALLOW_EMPTY_PASSWORD: 1
+        volumes:
+            - 'my-recipe-mysql:/var/lib/mysql'
+        networks:
+            - my-recipe-net
+        healthcheck:
+            test:
+                - CMD
+                - mysqladmin
+                - ping
+                - '-ppassword1234'
+            retries: 3
+            timeout: 5s
+networks:
+    my-recipe-net:
+        driver: bridge
+volumes:
+    my-recipe-mysql:
+        driver: local
